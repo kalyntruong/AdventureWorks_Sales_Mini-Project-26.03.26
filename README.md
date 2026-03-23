@@ -40,11 +40,8 @@ Mục tiêu chính dự án là phân tích hiệu quả kinh doanh toàn diện
 
 
 **Task 7: Chân dung Khách hàng VIP qua mô hình RFM (Segmentation)**
-* Áp dụng Window Function `NTILE(5)` để chấm điểm Recency, Frequency, Monetary một cách khách quan.
-* **Insight:** Hệ thống đã tự động nhận diện thành công nhóm **Champions** mang lại giá trị cao nhất và đặc biệt là nhóm **At Risk** (từng chi đậm nhưng đã lâu không quay lại).
-* **Actionable:** Chuyển ngay danh sách "At Risk" cho phòng Marketing để thực hiện chiến dịch Win-back (khuyến mãi lớn) trước khi họ rời bỏ hoàn toàn sang đối thủ.
+* **Insight:** Sau khi tính toán 3 chỉ số R,F,M của mỗi khách hàng và phân loại vào 3 Cấp bậc, bảng kết quả thu được số lượng và danh sách những Khách hàng VVIP, Khách hàng trung thành, Khách hàng mới tiềm năng, Khách hàng cận nguy hiểm và nhóm khách hàng đã mất.  
+*  **Champions** mang lại giá trị cao nhất và đặc biệt là nhóm **At Risk** (từng chi đậm nhưng đã lâu không quay lại).
+* **Actionable:** Chuyển danh sách "At Risk" cho phòng Marketing để thực hiện chiến dịch Win-back (khuyến mãi lớn) trước khi họ rời bỏ hoàn toàn sang đối thủ. Đồng thời đưa ra chiến lược kinh doanh tiếp theo để duy trì những khách hàng VVIP hiện tại và chuyển nhóm khách hàng tiềm năng sang khách hàng VVIP sắp tới. 
+<img width="1019" height="494" alt="image" src="https://github.com/user-attachments/assets/03a46402-da74-4dc7-8c92-70e6d80d54d9" />
 
----
-
-## 🚀 Lời kết
-Dự án không chỉ dừng lại ở việc trích xuất số liệu bằng SQL, mà còn xây dựng một luồng tư duy mạch lạc: từ việc rà soát tài chính tổng thể, tìm ra "nút thắt" vận hành, cho đến việc cá nhân hóa chiến lược chăm sóc khách hàng.
