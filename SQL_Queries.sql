@@ -114,30 +114,30 @@ ORDER BY MarginRaw DESC;
 
 --- PHẦN III: PHÂN TÍCH HÀNH VI KHÁCH HÀNG 
 /* TASK 5: Phân tích chu kỳ mua sắm của khách hàng */
+IF OBJECT_ID('tempdb..#CustomerGap') IS NOT NULL 
+    DROP TABLE #CustomerGap;
 
 WITH PurchaseHistory AS (
     SELECT 
         CustomerID,
         SalesOrderID,
         OrderDate, 
-        -- Lấy ngày của đơn hàng liền trước của cùng 1 khách hàng
         LAG(OrderDate) OVER (PARTITION BY CustomerID ORDER BY OrderDate) AS 'PreviousOrderDate'
     FROM Sales.SalesOrderHeader
     WHERE [Status] = 5 
 )
-
 SELECT 
     CustomerID,
     COUNT(SalesOrderID) AS [TotalOrders], 
-    
-    /* Tính toán trung bình khoảng cách ngày */
-    CAST(AVG(CAST(DATEDIFF(day, [PreviousOrderDate], OrderDate) AS DECIMAL(10,2))) AS DECIMAL(10,2)) AS 'AvgDaysBetweenOrders' 
-
+    CAST(AVG(CAST(DATEDIFF(day, [PreviousOrderDate], OrderDate) AS DECIMAL(10,0))) AS DECIMAL(10)) AS 'AvgDaysBetweenOrders' 
+INTO #CustomerGap 
 FROM PurchaseHistory
-WHERE PreviousOrderDate IS NOT NULL -- Bỏ qua đơn hàng đầu tiên (vì không có đơn trước đó để so sánh)
+WHERE PreviousOrderDate IS NOT NULL 
 GROUP BY CustomerID
-HAVING COUNT(SalesOrderID) > 1 -- Chỉ tập trung vào nhóm khách hàng có hành vi tái mua sắm
-ORDER BY AvgDaysBetweenOrders ASC; 
+HAVING COUNT(SalesOrderID) > 1;
+
+SELECT * FROM #CustomerGap 
+ORDER BY AvgDaysBetweenOrders ASC;
 
 /* TASK 6: Khám phá các cặp sản phẩm thường được mua cùng nhau (Market Basket)
    Kỹ thuật: Self-Join trên cùng một mã đơn hàng (SalesOrderID)
