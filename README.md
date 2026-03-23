@@ -1,221 +1,43 @@
-# AdventureWorks_Sales_Mini-Project-26.03.26
-Mini Project phân tích dữ liệu AdventureWorks bằng SQL 
----PHẦN I: TỔNG QUAN SỨC KHỎE DOANH NGHIỆP 
-/* Task 1: Phân tích xu hướng Doanh thu thuần theo từng tháng/năm */
+# 🚲 Phân tích Hiệu quả Kinh doanh & Hành vi Khách hàng - AdventureWorks
 
-SELECT * FROM Sales.SalesOrderHeader;
-SELECT 
-    YEAR(OrderDate) AS 'SalesYear',
-    MONTH(OrderDate) AS 'SalesMonth',
-    FORMAT(SUM(SubTotal), 'N2') AS 'MonthlyNetRevenue', 
-    COUNT(SalesOrderID) AS 'TotalOrders'
-FROM Sales.SalesOrderHeader
-WHERE Status = 5  
-GROUP BY YEAR(OrderDate), MONTH(OrderDate)
-ORDER BY SalesYear ASC, SalesMonth ASC;
+## 📌 Tổng quan dự án (Project Overview)
+Dự án này ứng dụng SQL (T-SQL) để khai thác và phân tích cơ sở dữ liệu bán lẻ AdventureWorks. Mục tiêu cốt lõi là đánh giá "sức khỏe" tài chính toàn diện của doanh nghiệp, tối ưu hóa hiệu suất bán hàng và thấu hiểu hành vi khách hàng thông qua mô hình RFM. Từ đó, chuyển hóa dữ liệu thô thành các đề xuất chiến lược (Data-driven decisions) cho ban giám đốc.
 
----PHẦN II: PHÂN TÍCH VÀ PHÂN LOẠI CHI TIẾT 
-/* Task 2: Phân tích % đóng góp doanh thu theo Danh mục sản phẩm
-Mục tiêu: Tìm ra nhóm sản phẩm chủ lực
-*/
-SELECT 
-    PC.Name AS 'CategoryName',
-    FORMAT(SUM(SOD.LineTotal), 'N2') AS 'CategoryRevenue',
-    CAST(SUM(SOD.LineTotal) * 100.0 / SUM(SUM(SOD.LineTotal)) OVER() AS DECIMAL(10,2)) AS 'RevenuePercentage'
-FROM Sales.SalesOrderDetail AS SOD
-JOIN Production.Product AS P ON SOD.ProductID = P.ProductID
-JOIN Production.ProductSubcategory AS PS ON P.ProductSubcategoryID = PS.ProductSubcategoryID
-JOIN Production.ProductCategory AS PC ON PS.ProductCategoryID = PC.ProductCategoryID
-GROUP BY PC.Name
-ORDER BY SUM(SOD.LineTotal) DESC;
+* **Công cụ:** SQL Server (SSMS), GitHub.
+* **Kỹ năng áp dụng:** CTEs, Window Functions (`NTILE`, `LAG`, `OVER`), Self-Join, Aggregations, `CASE WHEN` Logic.
+* **Toàn bộ Source Code SQL:** [Vui lòng xem chi tiết tại file SQL_Queries.sql trong Repository này]
 
-/* TASK 3: Bảng xếp hạng Hiệu suất Nhân viên Bán hàng từ trước đến nay 
-   Mục tiêu: Đánh giá nhân sự dựa trên tổng giá trị họ mang về cho công ty từ trước đến nay 
-   và tỷ trọng đóng góp của họ vào tổng doanh thu toàn công ty.
-*/
- -- Tính tổng tiền từng nhân viên đạt được 
-WITH SalesRepHistory AS (
-    SELECT 
-        SOH.SalesPersonID,
-        CONCAT(P.FirstName, ' ', P.LastName) AS 'SalesPersonName',
-        COUNT(SOH.SalesOrderID) AS 'TotalOrders',
-        SUM(SOH.SubTotal) AS 'AllTimeRevenue'
-    FROM Sales.SalesOrderHeader AS SOH
-    JOIN Person.Person AS P ON SOH.SalesPersonID = P.BusinessEntityID
-    WHERE SOH.[Status] = 5 
-      AND SOH.SalesPersonID IS NOT NULL -- Chỉ lấy những đơn hàng có nhân viên Sales phụ trách
-    GROUP BY SOH.SalesPersonID, P.FirstName, P.LastName
-)
--- Tính toán tỷ lệ đóng góp và Xếp hạng
-SELECT 
-    SalesPersonName,
-    TotalOrders,
-    FORMAT([AllTimeRevenue], 'N2') AS [AllTimeRevenue],
-    
-    -- Tính % đóng góp của nhân viên đó vào tổng doanh thu lịch sử của công ty
-    CAST(([AllTimeRevenue] * 100.0 / SUM([AllTimeRevenue]) OVER()) AS DECIMAL(10,2)) AS 'Contribution_Pct',
-    
-    RANK() OVER(ORDER BY [AllTimeRevenue] DESC) AS 'PerformanceRank' 
-FROM SalesRepHistory
-ORDER BY PerformanceRank;
+---
 
-/* TASK 4: Phân tích Biên Lợi nhuận gộp & Phân loại hiệu suất Vùng
-   Mục tiêu: Phân nhóm các vùng kinh doanh theo tỷ suất sinh lời.
-*/
+## 📊 Cấu trúc Phân tích & Insights nổi bật (Key Insights)
 
-WITH HeaderStats AS (
-    SELECT 
-        TerritoryID,
-        SUM(SubTotal) AS 'TotalRevenue' 
-    FROM Sales.SalesOrderHeader
-    WHERE [Status] = 5 
-    GROUP BY TerritoryID
-),
-CostStats AS (
-    SELECT 
-        SOH.TerritoryID,
-        SUM(SOD.OrderQty * PCH.StandardCost) AS 'TotalCOGS'
-    FROM Sales.SalesOrderHeader AS SOH
-    JOIN Sales.SalesOrderDetail AS SOD ON SOH.SalesOrderID = SOD.SalesOrderID
-    JOIN Production.ProductCostHistory AS PCH 
-        ON SOD.ProductID = PCH.ProductID 
-        AND SOH.OrderDate >= PCH.StartDate 
-        AND (SOH.OrderDate <= PCH.EndDate OR PCH.EndDate IS NULL)
-    WHERE SOH.[Status] = 5 
-    GROUP BY SOH.TerritoryID
-),
-FinalStats AS (
-    SELECT 
-        ST.[Name] AS [TerritoryName],
-        ST.[Group] AS [Region],
-        H.[TotalRevenue],
-        C.[TotalCOGS],
-        -- Tính % Margin 
-        (H.[TotalRevenue] - C.[TotalCOGS]) * 100.0 / NULLIF(H.[TotalRevenue], 0) AS [MarginRaw]
-    FROM Sales.SalesTerritory AS ST
-    JOIN HeaderStats AS H ON ST.TerritoryID = H.TerritoryID
-    JOIN CostStats AS C ON ST.TerritoryID = C.TerritoryID
-)
+### PHẦN I: BỨC TRANH VĨ MÔ (Macro Performance)
+**Task 1: Phân tích xu hướng Doanh thu & Lợi nhuận (Time Series Analysis)**
+* **Insight:** Doanh thu của AdventureWorks có sự biến động qua các năm. Cụ thể, [Điền tóm tắt xu hướng ví dụ: năm 2013 đạt đỉnh với doanh thu X, nhưng có dấu hiệu giảm nhẹ vào đầu 2014...]. Có tính mùa vụ rõ rệt vào các tháng [Điền tháng].
 
-SELECT 
-    TerritoryName,
-    Region,
-    FORMAT(TotalRevenue, 'N2') AS [Revenue],
-    FORMAT(MarginRaw, 'N2') + '%' AS [GrossMargin],
-    
-    CASE 
-        WHEN [MarginRaw] >= 20 THEN 'High Performance'
-        WHEN [MarginRaw] >= 10 AND [MarginRaw] < 20 THEN 'Average Performance'
-        WHEN [MarginRaw] < 10 THEN 'Low Performance (Review Required)'
-        ELSE 'No Data'
-    END AS [Profitability_Status]
+### PHẦN II: TỐI ƯU HÓA VẬN HÀNH (Operations & Profitability)
+**Task 2 & 3: Phân tích Sản phẩm & Nhân sự chủ lực (Pareto Principle)**
+* **Insight:** Dữ liệu chứng minh nguyên lý 80/20. Nhóm sản phẩm [Điền tên Category hoặc SubCategory] là "xương sống" mang lại phần lớn doanh thu. Về nhân sự, nhân viên [Điền tên nhân viên Top 1] là người có tỷ lệ đóng góp (Contribution Margin) cao nhất toàn hệ thống.
 
-FROM FinalStats
-ORDER BY MarginRaw DESC;
+**Task 4: Phân loại Lợi nhuận theo Vùng (Profitability Margin Status)**
+* Bằng cách đồng bộ Lịch sử Giá vốn (ProductCostHistory), hệ thống đã bóc tách được biên lợi nhuận thực tế (Gross Margin).
+* **Insight:** Khu vực [Điền tên Vùng điểm cao, VD: Australia] đang ở mức **High Performance** (>[Điền %]%). Ngược lại, khu vực [Điền tên vùng thấp] rơi vào nhóm **Low Performance**, yêu cầu ban quản trị rà soát lại chi phí vận hành và logistics tại đây.
 
---- PHẦN III: PHÂN TÍCH HÀNH VI KHÁCH HÀNG 
-/* TASK 5: Phân tích chu kỳ mua sắm của khách hàng */
+### PHẦN III: THẤU HIỂU HÀNH VI KHÁCH HÀNG (Customer Behavior Analysis)
+**Task 5: Phân tích Chu kỳ tái mua sắm (Customer Time Gap)**
+* **Insight:** Trung bình một khách hàng sẽ quay lại mua đơn tiếp theo sau **[Điền số ngày trung bình] ngày**. 
+* **Actionable:** Đây là "điểm rơi" lý tưởng để thiết lập hệ thống gửi Email Remarketing tự động nhằm kích cầu mua sắm.
 
-WITH PurchaseHistory AS (
-    SELECT 
-        CustomerID,
-        SalesOrderID,
-        OrderDate, 
-        -- Lấy ngày của đơn hàng liền trước của cùng 1 khách hàng
-        LAG(OrderDate) OVER (PARTITION BY CustomerID ORDER BY OrderDate) AS 'PreviousOrderDate'
-    FROM Sales.SalesOrderHeader
-    WHERE [Status] = 5 
-)
+**Task 6: Khám phá "Cặp bài trùng" (Market Basket Analysis)**
+* **Insight:** Khách hàng có xu hướng mua chung [Điền Tên SP A] và [Điền Tên SP B] cao nhất với **[Điền số lần] lần** xuất hiện cùng nhau trên 1 hóa đơn. 
+* **Actionable:** Đề xuất tạo Combo giảm giá 5-10% cho cặp sản phẩm này để tăng giá trị trung bình trên mỗi đơn hàng (AOV).
 
-SELECT 
-    CustomerID,
-    COUNT(SalesOrderID) AS [TotalOrders], 
-    
-    /* Tính toán trung bình khoảng cách ngày */
-    CAST(AVG(CAST(DATEDIFF(day, [PreviousOrderDate], OrderDate) AS DECIMAL(10,2))) AS DECIMAL(10,2)) AS 'AvgDaysBetweenOrders' 
+**Task 7: Chân dung Khách hàng VIP qua mô hình RFM (Segmentation)**
+* Áp dụng Window Function `NTILE(5)` để chấm điểm Recency, Frequency, Monetary một cách khách quan.
+* **Insight:** Hệ thống đã tự động nhận diện thành công nhóm **Champions** mang lại giá trị cao nhất và đặc biệt là nhóm **At Risk** (từng chi đậm nhưng đã lâu không quay lại).
+* **Actionable:** Chuyển ngay danh sách "At Risk" cho phòng Marketing để thực hiện chiến dịch Win-back (khuyến mãi lớn) trước khi họ rời bỏ hoàn toàn sang đối thủ.
 
-FROM PurchaseHistory
-WHERE PreviousOrderDate IS NOT NULL -- Bỏ qua đơn hàng đầu tiên (vì không có đơn trước đó để so sánh)
-GROUP BY CustomerID
-HAVING COUNT(SalesOrderID) > 1 -- Chỉ tập trung vào nhóm khách hàng có hành vi tái mua sắm
-ORDER BY AvgDaysBetweenOrders ASC; 
+---
 
-/* TASK 6: Khám phá các cặp sản phẩm thường được mua cùng nhau (Market Basket)
-   Kỹ thuật: Self-Join trên cùng một mã đơn hàng (SalesOrderID)
-*/
-
-SELECT TOP 20
-    P1.[Name] AS [Product_A],
-    P2.[Name] AS [Product_B],
-    COUNT(*) AS [Combination_Count] -- Số lần mua cùng lúc 2 sản phẩm 'Product A' và 'Product B' trong tổng số đơn hàng từ trước đến nay 
-
-FROM Sales.SalesOrderDetail AS SOD1
-JOIN Sales.SalesOrderDetail AS SOD2 
-    ON SOD1.SalesOrderID = SOD2.SalesOrderID 
-    AND SOD1.ProductID < SOD2.ProductID 
-
-JOIN Production.Product AS P1 ON SOD1.ProductID = P1.ProductID
-JOIN Production.Product AS P2 ON SOD2.ProductID = P2.ProductID
-JOIN Sales.SalesOrderHeader AS SOH ON SOD1.SalesOrderID = SOH.SalesOrderID
-
-WHERE SOH.[Status] = 5 
-GROUP BY P1.[Name], P2.[Name]
-ORDER BY Combination_Count DESC;
-
-/* TASK 7: Phân khúc khách hàng bằng mô hình RFM (Recency - Frequency - Monetary)
-   Mục tiêu: Chân dung hóa khách hàng để tối ưu hóa chiến lược Marketing và CRM.
-*/
-
--- BƯỚC 1: Tính toán 3 chỉ số R, F, M thô cho từng khách hàng
-WITH RawRFM AS (
-    SELECT 
-        CustomerID,
-        -- Recency (R): Số ngày từ lần mua cuối cùng đến mốc chốt dữ liệu (01/07/2014)
-        DATEDIFF(day, MAX(OrderDate), '2014-07-01') AS [Recency_Days],
-        -- Frequency (F): Tổng số đơn hàng thành công
-        COUNT(SalesOrderID) AS [Frequency_Count],
-        -- Monetary (M): Tổng giá trị chi tiêu
-        SUM(SubTotal) AS [Monetary_Value]
-    FROM Sales.SalesOrderHeader
-    WHERE [Status] = 5
-    GROUP BY CustomerID
-),
-
--- BƯỚC 2: Chấm điểm khách hàng từ 1 đến 5 
-RFM_Scoring AS (
-    SELECT 
-        CustomerID,
-        [Recency_Days],
-        [Frequency_Count],
-        [Monetary_Value],
-        
-        -- R: Mua càng gần đây (số ngày NHỎ) thì điểm càng CAO (5). 
-        NTILE(5) OVER (ORDER BY [Recency_Days] DESC) AS [R_Score],
-        
-        -- F: Số lần mua hàng càng lớn thì điểm càng cao (5) 
-        NTILE(5) OVER (ORDER BY [Frequency_Count] ASC) AS [F_Score],
-
-        -- M: Tổng giá trị mua hàng càng lớn thì điểm càng cao (5) 
-        NTILE(5) OVER (ORDER BY [Monetary_Value] ASC) AS [M_Score]
-    FROM RawRFM
-)
-
--- BƯỚC 3: Tổng hợp điểm số và dán nhãn phân khúc (Segmentation)
-SELECT 
-    CustomerID,
-    Recency_Days,
-    Frequency_Count,
-    FORMAT([Monetary_Value], 'N2') AS [Monetary_Value],
-    CONCAT([R_Score], [F_Score], [M_Score]) AS [RFM_Score],
-    
-    CASE 
-        WHEN CONCAT([R_Score], [F_Score], [M_Score]) IN ('555', '554', '545', '455', '454') THEN 'Champions (VVIP)'
-        WHEN [R_Score] >= 4 AND [F_Score] >= 3 THEN 'Loyal Customers'
-        WHEN [R_Score] >= 4 AND [F_Score] <= 2 THEN 'New / Promising'
-        WHEN [R_Score] <= 2 AND [M_Score] >= 4 THEN 'At Risk (Big Spenders)'
-        WHEN [R_Score] <= 2 AND [F_Score] <= 2 THEN 'Lost Customers'
-        ELSE 'General / Average'
-    END AS Customer_Segment
-
-FROM RFM_Scoring
-ORDER BY RFM_Score DESC, Monetary_Value DESC;
+## 🚀 Lời kết
+Dự án không chỉ dừng lại ở việc trích xuất số liệu bằng SQL, mà còn xây dựng một luồng tư duy mạch lạc: từ việc rà soát tài chính tổng thể, tìm ra "nút thắt" vận hành, cho đến việc cá nhân hóa chiến lược chăm sóc khách hàng.
