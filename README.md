@@ -1,15 +1,10 @@
 # 🚲 Phân tích Hiệu quả Kinh doanh & Hành vi Khách hàng - AdventureWorks
 
 ## 📌 Tổng quan dự án (Project Overview)
-Dự án này ứng dụng SQL (T-SQL) để khai thác và phân tích cơ sở dữ liệu bán lẻ AdventureWorks. Mục tiêu cốt lõi là đánh giá "sức khỏe" tài chính toàn diện của doanh nghiệp, tối ưu hóa hiệu suất bán hàng và thấu hiểu hành vi khách hàng thông qua mô hình RFM. Từ đó, chuyển hóa dữ liệu thô thành các đề xuất chiến lược (Data-driven decisions) cho ban giám đốc.
-
-* **Công cụ:** SQL Server (SSMS), GitHub.
-* **Kỹ năng áp dụng:** CTEs, Window Functions (`NTILE`, `LAG`, `OVER`), Self-Join, Aggregations, `CASE WHEN` Logic.
+Mục tiêu chính dự án là phân tích hiệu quả kinh doanh toàn diện của doanh nghiệp, tối ưu hóa hiệu suất bán hàng và thấu hiểu hành vi khách hàng thông qua mô hình RFM. Từ dữ liệu phân tích được để đề xuất các chiến lược kinh doanh sắp tới cho công ty. 
 * **Toàn bộ Source Code SQL:** [Vui lòng xem chi tiết tại file SQL_Queries.sql trong Repository này]
 
 ---
-
-## 📊 Cấu trúc Phân tích & Insights nổi bật (Key Insights)
 
 ### PHẦN I: BỨC TRANH VĨ MÔ (Macro Performance)
 **Task 1: Phân tích xu hướng Doanh thu & Lợi nhuận (Time Series Analysis)**
