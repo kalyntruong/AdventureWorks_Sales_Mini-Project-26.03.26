@@ -6,13 +6,19 @@ Mục tiêu chính dự án là phân tích hiệu quả kinh doanh toàn diện
 
 ---
 
-### PHẦN I: BỨC TRANH VĨ MÔ (Macro Performance)
-**Task 1: Phân tích xu hướng Doanh thu & Lợi nhuận (Time Series Analysis)**
-* **Insight:** Doanh thu của AdventureWorks có sự biến động qua các năm. Cụ thể, [Điền tóm tắt xu hướng ví dụ: năm 2013 đạt đỉnh với doanh thu X, nhưng có dấu hiệu giảm nhẹ vào đầu 2014...]. Có tính mùa vụ rõ rệt vào các tháng [Điền tháng].
+### PHẦN I: PHÂN TÍCH TOÀN DIỆN TÌNH HÌNH KINH DOANH CỦA DOANH NGHIỆP 
+**Task 1: Phân tích xu hướng Doanh thu & Lợi nhuận theo từng tháng / năm (Time Series Analysis)**
+* **Insight:** Doanh thu của AdventureWorks có sự biến động qua các năm. Ví dụ cụ thể, tháng 5 năm 2022 tổng số đơn hàng chỉ có 47 nhưng đến năm 2023 đã tăng lên 259 đơn trong tháng 5. Ngoài ra, nhìn chung có thể thấy số lượng tổng đơn hàng có sự tăng lên qua từng năm, đây là một dấu hiệu tăng trưởng tốt của doanh nghiệp.
+<img width="920" height="513" alt="image" src="https://github.com/user-attachments/assets/16ee24ed-7d42-4950-91a2-e1e732c09377" />
 
 ### PHẦN II: TỐI ƯU HÓA VẬN HÀNH (Operations & Profitability)
-**Task 2 & 3: Phân tích Sản phẩm & Nhân sự chủ lực (Pareto Principle)**
-* **Insight:** Dữ liệu chứng minh nguyên lý 80/20. Nhóm sản phẩm [Điền tên Category hoặc SubCategory] là "xương sống" mang lại phần lớn doanh thu. Về nhân sự, nhân viên [Điền tên nhân viên Top 1] là người có tỷ lệ đóng góp (Contribution Margin) cao nhất toàn hệ thống.
+**Task 2: Tìm ra Sản phẩm chủ lực **
+* **Insight:** Dữ liệu chứng minh Nhóm sản phẩm "Bikes" là "xương sống" mang lại phần lớn doanh thu (chiếm 86.17% Tổng doanh thu từ trước đến nay) 
+<img width="929" height="490" alt="image" src="https://github.com/user-attachments/assets/05bb938a-fa2a-46d6-abad-59f4e9a5f180" />  
+
+**Task 3: Xếp hạng nhân sự theo doanh số đạt được **
+* **Insight:** Về nhân sự, nhân viên Linda Mitchell là người có tỷ lệ đóng góp  cao nhất (Contribution_Pct = 12.88%) trên tổng doanh số từ trước đến nay.
+<img width="920" height="511" alt="image" src="https://github.com/user-attachments/assets/8e16d391-ec50-4a62-a64f-7607bca19ba9" />
 
 **Task 4: Phân loại Lợi nhuận theo Vùng (Profitability Margin Status)**
 * Bằng cách đồng bộ Lịch sử Giá vốn (ProductCostHistory), hệ thống đã bóc tách được biên lợi nhuận thực tế (Gross Margin).
